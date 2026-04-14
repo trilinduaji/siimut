@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>KATALA – Petugas Loket</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700;1,900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          katala: {
+            yellow: '#F5E642',
+            'yellow-dark': '#D4C400',
+            dark: '#0D1B14',
+            'dark-2': '#152318',
+            'dark-3': '#1E3023',
+            green: '#1D9E75',
+            'green-light': '#9FE1CB',
+            'green-pale': '#E1F5EE',
+            teal: '#0E7C6A',
+          }
+        },
+        fontFamily: {
+          display: ['Playfair Display', 'serif'],
+          body: ['DM Sans', 'sans-serif'],
+        },
+        keyframes: {
+          scanline: {
+            '0%, 100%': { transform: 'translateY(0px)', opacity: '1' },
+            '50%': { transform: 'translateY(120px)', opacity: '0.6' },
+          },
+          fadeUp: {
+            '0%': { opacity: '0', transform: 'translateY(16px)' },
+            '100%': { opacity: '1', transform: 'translateY(0)' },
+          },
+          pulse2: {
+            '0%, 100%': { opacity: '1' },
+            '50%': { opacity: '0.4' },
+          },
+          shimmer: {
+            '0%': { backgroundPosition: '-200% 0' },
+            '100%': { backgroundPosition: '200% 0' },
+          }
+        },
+        animation: {
+          scanline: 'scanline 2s ease-in-out infinite',
+          fadeUp: 'fadeUp 0.4s ease forwards',
+          pulse2: 'pulse2 1.5s ease-in-out infinite',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: #0D1B14; }
+  .font-display { font-family: 'Playfair Display', serif; }
+
+  /* Sidebar active */
+  .nav-link { transition: all 0.2s; }
+  .nav-link.active { background: #F5E642; color: #0D1B14 !important; }
+  .nav-link.active svg { color: #0D1B14; }
+
+  /* QR corner brackets */
+  .qr-corner { position: absolute; width: 24px; height: 24px; border-color: #F5E642; border-style: solid; }
+  .qr-corner.tl { top: 0; left: 0; border-width: 3px 0 0 3px; }
+  .qr-corner.tr { top: 0; right: 0; border-width: 3px 3px 0 0; }
+  .qr-corner.bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
+  .qr-corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
+
+  .scan-line {
+    position: absolute;
+    left: 8px; right: 8px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #F5E642, transparent);
+    animation: scanline 2s ease-in-out infinite;
+    box-shadow: 0 0 8px #F5E642aa;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #152318; }
+  ::-webkit-scrollbar-thumb { background: #1D9E75; border-radius: 4px; }
+
+  /* Table row hover */
+  .res-row:hover { background: rgba(29,158,117,0.08); }
+
+  /* Modal backdrop */
+  .modal-backdrop { backdrop-filter: blur(4px); }
+
+  /* Input focus */
+  input:focus, select:focus { outline: none; border-color: #F5E642 !important; box-shadow: 0 0 0 2px rgba(245,230,66,0.2); }
+
+  .page { display: none; }
+  .page.active { display: block; animation: fadeUp 0.35s ease forwards; }
+
+  /* Mobile bottom nav badge */
+  .mobile-nav-item.active-mobile { color: #F5E642; }
+  .mobile-nav-item.active-mobile .mobile-nav-dot { display: block; }
+  .mobile-nav-dot { display: none; width: 4px; height: 4px; border-radius: 50%; background: #F5E642; margin: 0 auto; }
+</style>
+</head>
+<body class="min-h-screen bg-katala-dark text-white">
+
+<!-- ═══════════════════════════════════════════ LOGIN PAGE ═══════════════════════════════════════════ -->
+<div id="page-login" class="page active">
+  <div class="min-h-screen bg-katala-dark flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <!-- Background blobs -->
+    <div class="absolute top-0 left-0 w-96 h-96 bg-katala-green opacity-5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+    <div class="absolute bottom-0 right-0 w-80 h-80 bg-katala-yellow opacity-5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
+
+    <div class="w-full max-w-sm relative z-10">
+      <!-- Logo -->
+      <div class="text-center mb-10">
+        <div class="font-display italic text-5xl font-black text-katala-yellow tracking-tight leading-none">katala</div>
+        <div class="text-katala-green-light text-xs tracking-[0.25em] uppercase mt-1 font-light">Sistem Wisata Lampung</div>
+      </div>
+
+      <!-- Card -->
+      <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-2xl p-8 shadow-2xl">
+        <h2 class="text-white font-display italic text-2xl font-bold mb-1">Masuk</h2>
+        <p class="text-gray-400 text-sm mb-7">Login sebagai Petugas Loket</p>
+
+        <!-- Error alert -->
+        <div id="login-error" class="hidden bg-red-900/40 border border-red-500/50 text-red-300 rounded-xl px-4 py-3 mb-5 text-sm flex items-center gap-2">
+          <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          Email atau password tidak cocok.
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-gray-400 uppercase tracking-widest block mb-2">Email</label>
+            <input id="login-email" type="email" placeholder="petugas@katala.id"
+              class="w-full bg-katala-dark border border-katala-dark-3 text-white placeholder-gray-600 rounded-xl px-4 py-3 text-sm transition-all"/>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 uppercase tracking-widest block mb-2">Password</label>
+            <div class="relative">
+              <input id="login-pass" type="password" placeholder="••••••••"
+                class="w-full bg-katala-dark border border-katala-dark-3 text-white placeholder-gray-600 rounded-xl px-4 py-3 text-sm pr-10 transition-all"/>
+              <button onclick="togglePass()" class="absolute right-3 top-3 text-gray-500 hover:text-katala-yellow transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          </div>
+          <button onclick="doLogin()"
+            class="w-full bg-katala-yellow text-katala-dark font-bold py-3.5 rounded-xl text-sm tracking-wide hover:bg-katala-yellow-dark transition-all active:scale-95 mt-2">
+            MASUK
+          </button>
+        </div>
+        <p class="text-center text-xs text-gray-600 mt-6">Demo: petugas@katala.id / katala123</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ MAIN APP (post-login) ═══════════════════════════════════════════ -->
+<div id="app-shell" class="hidden">
+
+  <!-- LAYOUT WRAPPER -->
+  <div class="flex min-h-screen">
+
+    <!-- ── SIDEBAR (desktop) ── -->
+    <aside class="hidden lg:flex flex-col w-64 bg-katala-dark-2 border-r border-katala-dark-3 fixed top-0 left-0 h-full z-30">
+      <!-- Logo -->
+      <div class="px-6 py-7 border-b border-katala-dark-3">
+        <div class="font-display italic text-3xl font-black text-katala-yellow leading-none">katala</div>
+        <div class="text-gray-500 text-xs tracking-widest uppercase mt-1">Petugas Loket</div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 px-3 py-6 space-y-1">
+        <button onclick="showPage('scan')" class="nav-link active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-katala-dark-3 transition-all" data-page="scan">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8H3a2 2 0 00-2 2v6a2 2 0 002 2h2m14-12h2a2 2 0 012 2v6a2 2 0 01-2 2h-2m-7-9V5a2 2 0 00-2-2H9a2 2 0 00-2 2v3"/></svg>
+          Scan QR Code
+        </button>
+        <button onclick="showPage('reservasi')" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-katala-dark-3 transition-all" data-page="reservasi">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Data Reservasi
+        </button>
+        <button onclick="showPage('laporan')" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-katala-dark-3 transition-all" data-page="laporan">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Laporan Tiket
+        </button>
+      </nav>
+
+      <!-- User -->
+      <div class="px-4 py-5 border-t border-katala-dark-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-katala-yellow flex items-center justify-center text-katala-dark font-bold text-sm flex-shrink-0">BS</div>
+          <div class="min-w-0">
+            <div class="text-white text-sm font-medium truncate">Budi Santoso</div>
+            <div class="text-gray-500 text-xs truncate">Petugas Loket</div>
+          </div>
+          <button onclick="doLogout()" class="ml-auto text-gray-500 hover:text-red-400 transition-colors flex-shrink-0" title="Logout">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="flex-1 lg:ml-64 pb-24 lg:pb-0">
+
+      <!-- Mobile Header -->
+      <header class="lg:hidden bg-katala-dark-2 border-b border-katala-dark-3 px-4 py-4 flex items-center justify-between sticky top-0 z-20">
+        <div class="font-display italic text-2xl font-black text-katala-yellow">katala</div>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-katala-yellow flex items-center justify-center text-katala-dark font-bold text-xs">BS</div>
+          <button onclick="doLogout()" class="text-gray-500 hover:text-red-400 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- ─────────── PAGE: SCAN QR ─────────── -->
+      <div id="page-scan" class="page active px-4 lg:px-8 py-6 lg:py-8">
+        <div class="mb-7">
+          <h1 class="font-display italic text-2xl lg:text-3xl font-bold text-white">Verifikasi QR Code</h1>
+          <p class="text-gray-400 text-sm mt-1">Scan QR Code tiket pengunjung untuk verifikasi kedatangan</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-6 max-w-4xl">
+          <!-- Scanner area -->
+          <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-2xl p-6">
+            <div class="text-xs text-gray-400 uppercase tracking-widest mb-4 font-medium">Area Kamera</div>
+            <!-- Viewfinder -->
+            <div class="relative mx-auto bg-katala-dark rounded-xl overflow-hidden" style="width:100%; aspect-ratio:1/1; max-width:260px;">
+              <!-- Grid overlay -->
+              <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(245,230,66,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(245,230,66,0.3) 1px, transparent 1px); background-size: 30px 30px;"></div>
+              <!-- Center QR icon placeholder -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-16 h-16 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8H3a2 2 0 00-2 2v6a2 2 0 002 2h2m14-12h2a2 2 0 012 2v6a2 2 0 01-2 2h-2m-7-9V5a2 2 0 00-2-2H9a2 2 0 00-2 2v3"/></svg>
+              </div>
+              <!-- Scan line -->
+              <div class="scan-line" style="top:8px;"></div>
+              <!-- Corner brackets -->
+              <div class="qr-corner tl" style="top:8px;left:8px;"></div>
+              <div class="qr-corner tr" style="top:8px;right:8px;"></div>
+              <div class="qr-corner bl" style="bottom:8px;left:8px;"></div>
+              <div class="qr-corner br" style="bottom:8px;right:8px;"></div>
+            </div>
+            <p class="text-center text-gray-500 text-xs mt-3 mb-5">Arahkan kamera ke QR Code pengunjung</p>
+            <div class="flex gap-3">
+              <button onclick="simulateScan(true)" class="flex-1 bg-katala-yellow text-katala-dark font-bold py-3 rounded-xl text-sm hover:bg-katala-yellow-dark transition-all active:scale-95">
+                Verifikasi QR
+              </button>
+              <button onclick="simulateScan(false)" class="flex-1 bg-katala-dark-3 text-gray-300 font-medium py-3 rounded-xl text-sm hover:bg-katala-dark hover:text-white transition-all active:scale-95">
+                Simulasi Gagal
+              </button>
+            </div>
+          </div>
+
+          <!-- Status Card -->
+          <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-2xl p-6">
+            <div class="text-xs text-gray-400 uppercase tracking-widest mb-4 font-medium">Hasil Scan Terakhir</div>
+            <div id="scan-idle" class="flex flex-col items-center justify-center h-48 text-center">
+              <div class="w-16 h-16 rounded-full bg-katala-dark-3 flex items-center justify-center mb-3">
+                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <p class="text-gray-500 text-sm">Belum ada scan</p>
+              <p class="text-gray-600 text-xs mt-1">Klik tombol untuk mensimulasikan</p>
+            </div>
+
+            <div id="scan-success" class="hidden">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-12 h-12 rounded-full bg-katala-green/20 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-6 h-6 text-katala-green" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <div>
+                  <div class="text-katala-green font-semibold text-sm">Berhasil Diverifikasi</div>
+                  <div class="text-gray-500 text-xs">QR Code valid & terverifikasi</div>
+                </div>
+              </div>
+              <div class="bg-katala-dark rounded-xl p-4 space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-400 text-xs">Nama Pengunjung</span>
+                  <span class="text-white text-sm font-medium" id="res-nama">—</span>
+                </div>
+                <div class="w-full h-px bg-katala-dark-3"></div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-400 text-xs">Destinasi</span>
+                  <span class="text-white text-sm font-medium" id="res-destinasi">—</span>
+                </div>
+                <div class="w-full h-px bg-katala-dark-3"></div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-400 text-xs">Jumlah Orang</span>
+                  <span class="text-white text-sm font-medium" id="res-jumlah">—</span>
+                </div>
+                <div class="w-full h-px bg-katala-dark-3"></div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-400 text-xs">Tanggal Kunjungan</span>
+                  <span class="text-white text-sm font-medium" id="res-tanggal">—</span>
+                </div>
+              </div>
+              <div class="mt-4 px-3 py-2 bg-katala-yellow/10 border border-katala-yellow/30 rounded-lg flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-katala-yellow animate-pulse2"></div>
+                <span class="text-katala-yellow text-xs font-medium">Status tiket telah diperbarui menjadi <b>Hadir</b></span>
+              </div>
+            </div>
+
+            <div id="scan-fail" class="hidden">
+              <div class="flex flex-col items-center justify-center h-48 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center mb-3">
+                  <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </div>
+                <p class="text-red-400 font-semibold">QR Code Tidak Valid</p>
+                <p class="text-gray-500 text-xs mt-2 max-w-[180px]">Tiket tidak ditemukan atau sudah digunakan sebelumnya</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stat strip -->
+        <div class="grid grid-cols-3 gap-3 mt-6 max-w-4xl">
+          <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-xl px-4 py-4 text-center">
+            <div class="text-2xl font-bold text-white">127</div>
+            <div class="text-gray-500 text-xs mt-1">Total Hari Ini</div>
+          </div>
+          <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-xl px-4 py-4 text-center">
+            <div class="text-2xl font-bold text-katala-green">98</div>
+            <div class="text-gray-500 text-xs mt-1">Terverifikasi</div>
+          </div>
+          <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-xl px-4 py-4 text-center">
+            <div class="text-2xl font-bold text-katala-yellow">29</div>
+            <div class="text-gray-500 text-xs mt-1">Belum Scan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─────────── PAGE: RESERVASI ─────────── -->
+      <div id="page-reservasi" class="page px-4 lg:px-8 py-6 lg:py-8">
+        <div class="mb-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 class="font-display italic text-2xl lg:text-3xl font-bold text-white">Data Reservasi</h1>
+            <p class="text-gray-400 text-sm mt-1">Daftar reservasi pengunjung hari ini</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-gray-500">
+            <div class="w-2 h-2 rounded-full bg-katala-green animate-pulse"></div>
+            Live update
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="relative mb-5 max-w-lg">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="search-res" type="text" placeholder="Cari nama atau ID reservasi..." oninput="filterReservasi()"
+            class="w-full bg-katala-dark-2 border border-katala-dark-3 text-white placeholder-gray-600 rounded-xl pl-9 pr-4 py-3 text-sm transition-all"/>
+        </div>
+
+        <!-- Desktop Table -->
+        <div class="hidden lg:block bg-katala-dark-2 border border-katala-dark-3 rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-katala-dark-3">
+                <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-4 font-medium">ID Reservasi</th>
+                <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-4 font-medium">Nama Pengunjung</th>
+                <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-4 font-medium">Destinasi</th>
+                <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-4 font-medium">Tanggal</th>
+                <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-4 font-medium">Orang</th>
+                <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-4 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody id="res-table-body"></tbody>
+          </table>
+          <div id="res-empty-desktop" class="hidden py-12 text-center text-gray-600 text-sm">Tidak ada data ditemukan.</div>
+        </div>
+
+        <!-- Mobile Card List -->
+        <div class="lg:hidden space-y-3" id="res-card-list"></div>
+        <div id="res-empty-mobile" class="lg:hidden hidden py-12 text-center text-gray-600 text-sm">Tidak ada data ditemukan.</div>
+
+        <div class="mt-4 text-xs text-gray-600" id="res-count"></div>
+      </div>
+
+      <!-- ─────────── PAGE: LAPORAN ─────────── -->
+      <div id="page-laporan" class="page px-4 lg:px-8 py-6 lg:py-8">
+        <div class="mb-7">
+          <h1 class="font-display italic text-2xl lg:text-3xl font-bold text-white">Laporan Tiket Terjual</h1>
+          <p class="text-gray-400 text-sm mt-1">Riwayat penjualan tiket berdasarkan rentang tanggal</p>
+        </div>
+
+        <!-- Filter -->
+        <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-2xl p-5 mb-6 max-w-2xl">
+          <div class="text-xs text-gray-400 uppercase tracking-widest mb-4 font-medium">Filter Tanggal</div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="flex-1">
+              <label class="text-xs text-gray-500 mb-1.5 block">Dari Tanggal</label>
+              <input id="date-start" type="date" class="w-full bg-katala-dark border border-katala-dark-3 text-white rounded-xl px-4 py-2.5 text-sm transition-all"
+                style="color-scheme: dark;" value="2026-04-07"/>
+            </div>
+            <div class="flex-1">
+              <label class="text-xs text-gray-500 mb-1.5 block">Sampai Tanggal</label>
+              <input id="date-end" type="date" class="w-full bg-katala-dark border border-katala-dark-3 text-white rounded-xl px-4 py-2.5 text-sm transition-all"
+                style="color-scheme: dark;" value="2026-04-14"/>
+            </div>
+            <div class="flex items-end">
+              <button onclick="filterLaporan()" class="w-full sm:w-auto bg-katala-yellow text-katala-dark font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-katala-yellow-dark transition-all active:scale-95 whitespace-nowrap">
+                Terapkan Filter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <div class="col-span-2 bg-katala-dark-2 border border-katala-yellow/30 rounded-2xl p-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-katala-yellow opacity-5 rounded-full -translate-y-8 translate-x-8 pointer-events-none"></div>
+            <div class="text-xs text-katala-yellow uppercase tracking-widest mb-2 font-medium">Total Tiket Terjual</div>
+            <div id="total-tiket" class="font-display text-5xl font-black text-katala-yellow italic">0</div>
+            <div class="text-gray-500 text-xs mt-2">dalam rentang tanggal yang dipilih</div>
+          </div>
+          <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-2xl p-5">
+            <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">Total Pengunjung</div>
+            <div id="total-orang" class="text-3xl font-bold text-white">0</div>
+            <div class="text-gray-600 text-xs mt-1">orang</div>
+          </div>
+          <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-2xl p-5">
+            <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">Hari Aktif</div>
+            <div id="total-hari" class="text-3xl font-bold text-katala-green">0</div>
+            <div class="text-gray-600 text-xs mt-1">hari</div>
+          </div>
+        </div>
+
+        <!-- Laporan Table -->
+        <div class="bg-katala-dark-2 border border-katala-dark-3 rounded-2xl overflow-hidden">
+          <div class="px-5 py-4 border-b border-katala-dark-3">
+            <div class="text-sm font-medium text-white">Riwayat Penjualan</div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-katala-dark-3">
+                  <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-3 font-medium">Tanggal</th>
+                  <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-3 font-medium">ID Tiket</th>
+                  <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-3 font-medium">Destinasi</th>
+                  <th class="text-left text-xs text-gray-500 uppercase tracking-widest px-5 py-3 font-medium">Pengunjung</th>
+                  <th class="text-right text-xs text-gray-500 uppercase tracking-widest px-5 py-3 font-medium">Orang</th>
+                </tr>
+              </thead>
+              <tbody id="laporan-table-body"></tbody>
+            </table>
+            <div id="laporan-empty" class="hidden py-12 text-center text-gray-600 text-sm">Tidak ada data pada rentang tanggal ini.</div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── MOBILE BOTTOM NAV ── -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-katala-dark-2 border-t border-katala-dark-3 z-30">
+    <div class="grid grid-cols-3">
+      <button onclick="showPage('scan')" class="mobile-nav-item active-mobile flex flex-col items-center gap-1 py-3 text-gray-400 transition-colors" id="mnav-scan">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8H3a2 2 0 00-2 2v6a2 2 0 002 2h2m14-12h2a2 2 0 012 2v6a2 2 0 01-2 2h-2m-7-9V5a2 2 0 00-2-2H9a2 2 0 00-2 2v3"/></svg>
+        <span class="text-xs">Scan QR</span>
+        <div class="mobile-nav-dot"></div>
+      </button>
+      <button onclick="showPage('reservasi')" class="mobile-nav-item flex flex-col items-center gap-1 py-3 text-gray-400 transition-colors" id="mnav-reservasi">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <span class="text-xs">Reservasi</span>
+        <div class="mobile-nav-dot"></div>
+      </button>
+      <button onclick="showPage('laporan')" class="mobile-nav-item flex flex-col items-center gap-1 py-3 text-gray-400 transition-colors" id="mnav-laporan">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span class="text-xs">Laporan</span>
+        <div class="mobile-nav-dot"></div>
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+<script>
+// ── DUMMY DATA ──
+const dummy_visitors = [
+  { id:'RSV-001', nama:'Rina Wulandari', destinasi:'Pantai Tanjung Setia', tanggal:'2026-04-14', orang:2, status:'hadir' },
+  { id:'RSV-002', nama:'Ahmad Fauzi', destinasi:'Way Kambas', tanggal:'2026-04-14', orang:3, status:'hadir' },
+  { id:'RSV-003', nama:'Siti Mariam', destinasi:'Teluk Kiluan', tanggal:'2026-04-14', orang:4, status:'belum' },
+  { id:'RSV-004', nama:'Dodi Pratama', destinasi:'Bukit Barisan Selatan', tanggal:'2026-04-14', orang:1, status:'belum' },
+  { id:'RSV-005', nama:'Reni Agustina', destinasi:'Pantai Tanjung Setia', tanggal:'2026-04-14', orang:2, status:'hadir' },
+  { id:'RSV-006', nama:'Hendra Setiawan', destinasi:'Way Kambas', tanggal:'2026-04-14', orang:5, status:'batal' },
+  { id:'RSV-007', nama:'Maya Kurniasih', destinasi:'Teluk Kiluan', tanggal:'2026-04-14', orang:2, status:'hadir' },
+  { id:'RSV-008', nama:'Bima Tri Atmaja', destinasi:'Bukit Barisan Selatan', tanggal:'2026-04-14', orang:3, status:'belum' },
+  { id:'RSV-009', nama:'Dewi Lestari', destinasi:'Pantai Mutun', tanggal:'2026-04-14', orang:2, status:'hadir' },
+  { id:'RSV-010', nama:'Rizky Ramadhan', destinasi:'Danau Ranau', tanggal:'2026-04-14', orang:4, status:'hadir' },
+];
+
+const dummy_scan = [
+  { nama:'Rina Wulandari', destinasi:'Pantai Tanjung Setia', orang:2, tanggal:'14 Apr 2026' },
+  { nama:'Ahmad Fauzi', destinasi:'Way Kambas', orang:3, tanggal:'14 Apr 2026' },
+  { nama:'Maya Kurniasih', destinasi:'Teluk Kiluan', orang:2, tanggal:'14 Apr 2026' },
+  { nama:'Dewi Lestari', destinasi:'Pantai Mutun', orang:2, tanggal:'14 Apr 2026' },
+];
+
+const dummy_laporan = [
+  { tanggal:'2026-04-07', id:'TKT-0701', destinasi:'Pantai Tanjung Setia', nama:'Fajar Nugroho', orang:3 },
+  { tanggal:'2026-04-07', id:'TKT-0702', destinasi:'Way Kambas', nama:'Laila Sari', orang:2 },
+  { tanggal:'2026-04-08', id:'TKT-0801', destinasi:'Teluk Kiluan', nama:'Budi Kurniawan', orang:4 },
+  { tanggal:'2026-04-08', id:'TKT-0802', destinasi:'Pantai Mutun', nama:'Sri Wahyuni', orang:2 },
+  { tanggal:'2026-04-09', id:'TKT-0901', destinasi:'Danau Ranau', nama:'Eko Prasetyo', orang:5 },
+  { tanggal:'2026-04-10', id:'TKT-1001', destinasi:'Way Kambas', nama:'Yuni Astuti', orang:1 },
+  { tanggal:'2026-04-10', id:'TKT-1002', destinasi:'Pantai Tanjung Setia', nama:'Hadi Santoso', orang:3 },
+  { tanggal:'2026-04-11', id:'TKT-1101', destinasi:'Bukit Barisan', nama:'Nita Rahayu', orang:2 },
+  { tanggal:'2026-04-12', id:'TKT-1201', destinasi:'Teluk Kiluan', nama:'Arief Wicaksono', orang:4 },
+  { tanggal:'2026-04-12', id:'TKT-1202', destinasi:'Pantai Mutun', nama:'Rina Wulandari', orang:2 },
+  { tanggal:'2026-04-13', id:'TKT-1301', destinasi:'Way Kambas', nama:'Deni Firmansyah', orang:3 },
+  { tanggal:'2026-04-14', id:'TKT-1401', destinasi:'Pantai Tanjung Setia', nama:'Sari Dewi', orang:2 },
+  { tanggal:'2026-04-14', id:'TKT-1402', destinasi:'Danau Ranau', nama:'Tomi Setiawan', orang:4 },
+  { tanggal:'2026-04-14', id:'TKT-1403', destinasi:'Teluk Kiluan', nama:'Mega Kusuma', orang:2 },
+];
+
+// ── INIT ──
+let scanIdx = 0;
+
+function togglePass() {
+  const p = document.getElementById('login-pass');
+  p.type = p.type === 'password' ? 'text' : 'password';
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-error');
+  if (email === 'petugas@katala.id' && pass === 'katala123') {
+    err.classList.add('hidden');
+    document.getElementById('page-login').style.display = 'none';
+    document.getElementById('app-shell').classList.remove('hidden');
+    renderReservasi(dummy_visitors);
+    filterLaporan();
+  } else {
+    err.classList.remove('hidden');
+    document.getElementById('login-email').classList.add('border-red-500');
+    document.getElementById('login-pass').classList.add('border-red-500');
+  }
+}
+
+function doLogout() {
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('page-login').style.display = '';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').classList.add('hidden');
+}
+
+document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ── NAVIGATION ──
+function showPage(name) {
+  ['scan','reservasi','laporan'].forEach(p => {
+    document.getElementById('page-'+p).classList.remove('active');
+    document.getElementById('page-'+p).classList.add('page');
+    const mnav = document.getElementById('mnav-'+p);
+    if(mnav) mnav.classList.remove('active-mobile');
+  });
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+
+  const target = document.getElementById('page-'+name);
+  target.classList.add('active');
+  const mnav = document.getElementById('mnav-'+name);
+  if(mnav) mnav.classList.add('active-mobile');
+  document.querySelectorAll(`.nav-link[data-page="${name}"]`).forEach(el => el.classList.add('active'));
+}
+
+// ── SCAN QR ──
+function simulateScan(success) {
+  document.getElementById('scan-idle').classList.add('hidden');
+  document.getElementById('scan-success').classList.add('hidden');
+  document.getElementById('scan-fail').classList.add('hidden');
+
+  if (success) {
+    const d = dummy_scan[scanIdx % dummy_scan.length]; scanIdx++;
+    document.getElementById('res-nama').textContent = d.nama;
+    document.getElementById('res-destinasi').textContent = d.destinasi;
+    document.getElementById('res-jumlah').textContent = d.orang + ' orang';
+    document.getElementById('res-tanggal').textContent = d.tanggal;
+    document.getElementById('scan-success').classList.remove('hidden');
+  } else {
+    document.getElementById('scan-fail').classList.remove('hidden');
+  }
+}
+
+// ── RESERVASI ──
+function statusBadge(status) {
+  const map = {
+    hadir: 'bg-katala-green/20 text-katala-green border border-katala-green/30',
+    belum: 'bg-yellow-900/30 text-yellow-400 border border-yellow-600/30',
+    batal: 'bg-red-900/30 text-red-400 border border-red-600/30',
+  };
+  const label = { hadir:'Sudah Hadir', belum:'Belum Hadir', batal:'Dibatalkan' };
+  return `<span class="inline-block text-xs px-2.5 py-1 rounded-full font-medium ${map[status]||''}">${label[status]||status}</span>`;
+}
+
+function renderReservasi(data) {
+  const tbody = document.getElementById('res-table-body');
+  const cards = document.getElementById('res-card-list');
+  const emptyD = document.getElementById('res-empty-desktop');
+  const emptyM = document.getElementById('res-empty-mobile');
+  const count = document.getElementById('res-count');
+
+  tbody.innerHTML = '';
+  cards.innerHTML = '';
+
+  if (!data.length) {
+    emptyD.classList.remove('hidden');
+    emptyM.classList.remove('hidden');
+    count.textContent = '';
+    return;
+  }
+  emptyD.classList.add('hidden');
+  emptyM.classList.add('hidden');
+  count.textContent = `Menampilkan ${data.length} dari ${dummy_visitors.length} reservasi`;
+
+  data.forEach((r, i) => {
+    const tgl = new Date(r.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+    // Desktop row
+    const tr = document.createElement('tr');
+    tr.className = 'res-row border-b border-katala-dark-3 transition-colors';
+    tr.innerHTML = `
+      <td class="px-5 py-3.5 text-katala-yellow font-mono text-xs">${r.id}</td>
+      <td class="px-5 py-3.5 text-white font-medium text-sm">${r.nama}</td>
+      <td class="px-5 py-3.5 text-gray-400 text-sm">${r.destinasi}</td>
+      <td class="px-5 py-3.5 text-gray-400 text-sm">${tgl}</td>
+      <td class="px-5 py-3.5 text-gray-300 text-sm">${r.orang}</td>
+      <td class="px-5 py-3.5">${statusBadge(r.status)}</td>
+    `;
+    tbody.appendChild(tr);
+
+    // Mobile card
+    const card = document.createElement('div');
+    card.className = 'bg-katala-dark-2 border border-katala-dark-3 rounded-xl p-4';
+    card.innerHTML = `
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <div class="text-white font-medium text-sm">${r.nama}</div>
+          <div class="text-katala-yellow font-mono text-xs mt-0.5">${r.id}</div>
+        </div>
+        ${statusBadge(r.status)}
+      </div>
+      <div class="space-y-1.5 text-xs">
+        <div class="flex justify-between"><span class="text-gray-500">Destinasi</span><span class="text-gray-300">${r.destinasi}</span></div>
+        <div class="flex justify-between"><span class="text-gray-500">Tanggal</span><span class="text-gray-300">${tgl}</span></div>
+        <div class="flex justify-between"><span class="text-gray-500">Jumlah</span><span class="text-gray-300">${r.orang} orang</span></div>
+      </div>
+    `;
+    cards.appendChild(card);
+  });
+}
+
+function filterReservasi() {
+  const q = document.getElementById('search-res').value.toLowerCase();
+  const filtered = dummy_visitors.filter(r =>
+    r.nama.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || r.destinasi.toLowerCase().includes(q)
+  );
+  renderReservasi(filtered);
+}
+
+// ── LAPORAN ──
+function filterLaporan() {
+  const start = document.getElementById('date-start').value;
+  const end = document.getElementById('date-end').value;
+  const filtered = dummy_laporan.filter(r => r.tanggal >= start && r.tanggal <= end);
+
+  const totalTiket = filtered.length;
+  const totalOrang = filtered.reduce((a,r) => a + r.orang, 0);
+  const days = [...new Set(filtered.map(r => r.tanggal))].length;
+
+  document.getElementById('total-tiket').textContent = totalTiket;
+  document.getElementById('total-orang').textContent = totalOrang;
+  document.getElementById('total-hari').textContent = days;
+
+  const tbody = document.getElementById('laporan-table-body');
+  const empty = document.getElementById('laporan-empty');
+  tbody.innerHTML = '';
+
+  if (!filtered.length) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  filtered.forEach(r => {
+    const tgl = new Date(r.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+    const tr = document.createElement('tr');
+    tr.className = 'res-row border-b border-katala-dark-3 transition-colors';
+    tr.innerHTML = `
+      <td class="px-5 py-3.5 text-gray-400 text-sm">${tgl}</td>
+      <td class="px-5 py-3.5 text-katala-yellow font-mono text-xs">${r.id}</td>
+      <td class="px-5 py-3.5 text-gray-300 text-sm">${r.destinasi}</td>
+      <td class="px-5 py-3.5 text-white text-sm">${r.nama}</td>
+      <td class="px-5 py-3.5 text-gray-300 text-sm text-right">${r.orang}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>
